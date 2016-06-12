@@ -7,6 +7,10 @@ const BrowserWindow = electron.BrowserWindow
 
 let mainWindow
 
+server.listen(port, function () {
+    console.log('Server listening at port %d', port);
+});
+
 function createWindow () {
   mainWindow = new BrowserWindow({width: 1280,
       height: 720,

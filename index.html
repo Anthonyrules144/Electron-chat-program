@@ -1,12 +1,20 @@
 <!DOCTYPE html>
 <html>
 	<head>
+		<span class="version">v0.01682</span>
+		<script src="http://media.twiliocdn.com/sdk/rtc/js/ip-messaging/v0.8/twilio-ip-messaging.min.js"></script>
+		<link rel="shortcut icon" href="http://www.twilio.com/marketing/bundles/marketing/img/favicons/favicon.ico">
         <script src="./jquery-1.12.4.min.js"></script>
-        <title>Test project</title>
+        <title>Chat-Program</title>
         <link rel="stylesheet" href="./BootStrap/bootstrap.css">
 		<link rel="stylesheet" href="./BootStrap/bootstrap.min.js">
         <script>window.$ = window.jQuery = require('./jquery-1.12.4.min.js');</script>
         <style>
+			.version {
+				position: absolute;
+				top: 5px;
+				z-index: 6;
+			}
             body {
                 overflow-x: hidden;
 				overflow-y: auto;
@@ -23,6 +31,7 @@
 			#ln2 { position: relative;}
 			#ln3 { position: relative;}
 			#user-settings {
+				display: inline-block;
 				left: -250px;
 				position: absolute;
 				height: 100%;
@@ -83,6 +92,9 @@
 				position: absolute;
 				top: 2%;
 			}
+			input {
+				color: grey;
+			}
 			hr {
 				width: 550px;
 			    display: block;
@@ -95,8 +107,17 @@
 			}
         </style>
         <script>
+			var interval = setInterval(function(){
+				val = $("#server-text").value;
+				$.get("http://149.56.143.36/Chat-Program/chat.asp", function(data, status) {
+			        if(data === val)
+						return;
+					var br = document.createElement("br");
+					$("#server-text").vaue = data;
+			    });
+			}, 1500);
 			$(document).ready(function() {
-				var userSettingsOut = 0;
+				userSettings = false;
 				$('#btn').hover(function(){
 					$("#ln1").css({ WebkitTransform: 'rotate(' + 45 + 'deg)', top: "20px" });
 					$("#ln3").css({ WebkitTransform: 'rotate(' + -45 + 'deg)', top: "-20px" });
@@ -105,17 +126,22 @@
 					$("#ln1").css({ WebkitTransform: 'rotate(' + 0 + 'deg)', top: "0px" });
 					$("#ln3").css({ WebkitTransform: 'rotate(' + 0 + 'deg)', top: "0px" });
 				});
-				$("#btn").click(function() { $("#user-settings").animate({ left: "0px" }, 750, function() { }); });
+				$("#btn").click(function() { userSettings = true; $("#user-settings").animate({ left: "0px" }, 750, function() { }); });
 				$("#user-settings").mouseleave(function() {
+					userSettings = false;
 					$("#user-settings").animate({ left: "-250px" }, 750, function() { });
 				});
 			});
             document.onkeydown = checkKey;
 
 			function addNewText() {
+				if(document.getElementById("user-input_input").value === "")
+					return;
                 name = document.getElementById("user-name").value;
-                if(name === "")
+                if(name === "") {
                     name = "Guest";
+					document.getElementById("user-name").value = "Guest";
+				}
                 var br = document.createElement("br");
                 var span = document.createElement("span");
                 var node = document.createTextNode(name + ": " + document.getElementById("user-input_input").value);
@@ -124,11 +150,18 @@
                 document.getElementById("server-text").appendChild(span);
 
                 document.getElementById("user-input_input").value = "";
+				$.post("demo_test_post.asp",
+    			{
             }
 
             function checkKey(key) {
-                if(key.code === "enter" || key.keyCode == 13)
-                    addNewText();
+				if(key.code !== "enter" && key.keyCode != 13)
+					return;
+				if(userSettings == true) {
+					userSettings = false;
+					return $("#user-settings").animate({ left: "-250px" }, 750, function() { });
+				}
+                addNewText();
             }
         </script>
     </head>
@@ -144,7 +177,7 @@
 				<p>User-Settings</b><hr>
 				<p>User-Name: <input id="user-name"></input></p>
 			</span>
-            <span id="server-text">Welcome to the start of the text channel, guest <hr id="start-line"></span>
+            <span id="server-text">Welcome to the start of the text channel, <span id="who">guest</span> <hr id="start-line"></span>
             <div id="user-input">
                 <input id="user-input_input"></input>
                 <button id="user-input_button" onclick="addNewText()" class="btn btn-default" type="button">Enter</button>
