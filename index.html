@@ -2,6 +2,7 @@
 <html>
 	<head>
 		<span class="version">v0.01750</span>
+		<script>defaultChannel = "TestChannel";</script>
 		<script src="http://media.twiliocdn.com/sdk/rtc/js/ip-messaging/v0.8/twilio-ip-messaging.min.js"></script>
 		<link rel="shortcut icon" href="http://www.twilio.com/marketing/bundles/marketing/img/favicons/favicon.ico">
         <script src="./jquery-1.12.4.min.js"></script>
@@ -20,12 +21,14 @@
 				overflow-y: auto;
             }
 			#btn {
+				color: white;
 				position: absolute;
-				left: 5px;
-				top: 5px;
+				left: 15px;
+				top: 15px;
 				width: 50px;
 				height: 50px;
 				cursor: pointer;
+				z-index: 7;
 			}
 			#ln1 { position: relative; top: 7px; }
 			#ln2 { position: relative;}
@@ -50,7 +53,7 @@
 				background-position: bottom;
 				background-size: cover;
             }
-            #server-text {
+            #server-box {
                 background-color: grey;
                 color: white;
                 overflow: auto;
@@ -65,6 +68,11 @@
                 height: 80%;
                 min-height: 5%;
             }
+			#server-text {
+				overflow-x: hidden;
+				overflow-y: auto;
+				text-overflow: ellipsis;
+			}
             #username {
                 width: 250px;
             }
@@ -88,20 +96,14 @@
 				position: relative;
 				right: 5px;
 			}
-			#start-line {
-				position: absolute;
-				top: 2%;
-			}
 			input {
 				color: grey;
 			}
 			hr {
-				width: 550px;
+				width: auto;
 			    display: block;
 			    margin-top: 0.5em;
 			    margin-bottom: 0.5em;
-			    margin-left: auto;
-			    margin-right: auto;
 			    border-style: inset;
 			    border-width: 1px;
 			}
@@ -111,15 +113,19 @@
         </style>
         <script>
 			var interval = setInterval(function(){
-				val = $("#server-text").value;
-				$.get("http://149.56.143.36/Chat-Program/chat.asp", function(data, status) {
-			        if(data === val)
-						return;
+				val = $("#server-text").text();
+				$.get("http://149.56.143.36/ChatProgram/chat.asp", function(data, status) {
+					return; // Not yet.
+					if(status !== "success")
+						return console.log("There was an error retreiving the file.");
+
 					var br = document.createElement("br");
-					$("#server-text").vaue = data;
+					document.getElementById("server-text").appendChild(br);
+					$("#server-text").text(val + data);
 			    });
 			}, 1500);
 			$(document).ready(function() {
+				document.getElementById("server-text").scrollTop = document.getElementById("server-text").scrollHeight;
 				userSettings = false;
 				$('#btn').hover(function(){
 					$("#ln1").stop(true, false).animate({top: "20px" }, 150).css({ WebkitTransform: 'rotate(' + 45 + 'deg)'});
@@ -129,16 +135,27 @@
 					$("#ln1").stop(true, false).css({ WebkitTransform: 'rotate(' + 0 + 'deg)'}, 750).animate({top: "7px" }, 550);
 					$("#ln3").stop(true, false).css({ WebkitTransform: 'rotate(' + 0 + 'deg)'}, 750).animate({top: "-7px" }, 550);
 				});
-				$("#btn").click(function() { userSettings = true; $("#user-settings").animate({ left: "0px" }, 750, function() { }); });
+				$("#btn").click(function() {
+					if(userSettings == true) {
+						$("#user-settings").stop(true, false).animate({ left: "-250px" }, 750);
+						return userSettings = false;
+					}
+					userSettings = true;
+					$('#btn').stop(true, false).animate({ left: "-55px" }, 250, function() { $("#user-settings").stop(true, false).animate({ left: "0px" }, 750); });
+			  	});
 				$("#user-settings").mouseleave(function() {
+					if(userSettings == false)
+						return;
 					userSettings = false;
-					$("#user-settings").animate({ left: "-250px" }, 750, function() { });
+					$("#user-settings").stop(true, false).animate({ left: "-250px" }, 750, function() {
+						$('#btn').stop(true, false).animate({ left: "15px" }, 250);
+					});
 				});
 			});
             document.onkeydown = checkKey;
 
 			function addNewText() {
-				if(document.getElementById("user-input_input").value === "")
+				if(document.getElementById("user-input_input").value === "" || document.getElementById("user-input_input").value === " ")
 					return;
                 name = document.getElementById("user-name").value;
                 if(name === "") {
@@ -153,6 +170,12 @@
                 document.getElementById("server-text").appendChild(span);
 
                 document.getElementById("user-input_input").value = "";
+				$.post("http://149.56.143.36/ChatProgram/chat.asp", {
+					write: document.getElementById("user-input_input").value,
+					name: document.getElementById("user-name").value
+				}, function(data, status) {
+					alert(data);
+				});
             }
 
             function checkKey(key) {
@@ -174,11 +197,14 @@
 				<img id="ln3" src="./images/line.png">
 			</a>
 			<span id="user-settings">
-				<a onclick="$('#user-settings').animate({ left: '-250px' }, 750, function() {});"><p><==</p></a>
+				<a onclick=""><p><==</p></a>
 				<p>User-Settings</b><hr>
 				<p>User-Name: <input id="user-name"></input></p>
 			</span>
-            <span id="server-text">Welcome to the start of the text channel, <span id="who">guest</span> <hr id="start-line"></span>
+			<span id="server-box">
+				<h3>Welcome to "Test-Channel" <span id="who"></span></h3> <hr>
+				<p id="server-text"></p>
+            </span>
             <div id="user-input">
                 <input id="user-input_input"></input>
                 <button id="user-input_button" onclick="addNewText()" class="btn btn-default" type="button">Enter</button>
